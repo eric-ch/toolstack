@@ -23,7 +23,7 @@ DBUS_DIR = `ocamlfind query dbus`
 CAMOMILE_DIR = `ocamlfind query camomile`
 BIGARRAY_DIR = `ocamlfind query bigarray`
 
-c_libs = -cclib -L$(XEN_DIST_ROOT)/usr/lib -cclib -lxenctrl -cclib -lxenguest -cclib -lxenhvm -cclib -lxenstore
+c_libs = -cclib -L$(XEN_DIST_ROOT)/usr/lib -cclib -lxenctrl -cclib -lxenguest -cclib -lxenhvm -cclib -lxenstore -cclib -lv4v
 
 OCAMLINCLUDE += \
 	-I $(TOPLEVEL)/libs/log -I $(TOPLEVEL)/libs/xb -I $(TOPLEVEL)/libs/xs -I $(TOPLEVEL)/libs/udev \
@@ -63,6 +63,7 @@ xenvm_LIBS = unix.cmxa camomile.cmxa dBus.cmxa threads.cmxa $(TOPLEVEL)/libs/uui
 	-ccopt -L -ccopt $(TOPLEVEL)/libs/jsonrpc $(TOPLEVEL)/libs/jsonrpc/jsonrpc.cmxa \
 	-ccopt -L -ccopt $(TOPLEVEL)/libs/scsi $(TOPLEVEL)/libs/scsi/scsi.cmxa \
 	-ccopt -L -ccopt $(TOPLEVEL)/libs/base64 $(TOPLEVEL)/libs/base64/base64.cmxa \
+	-ccopt -L -ccopt $(TOPLEVEL)/libs/dmbus $(TOPLEVEL)/libs/dmbus/dmbus.cmxa \
 	-ccopt -L -ccopt $(TOPLEVEL)/libs/common $(TOPLEVEL)/libs/common/tscommon.cmxa \
 	-ccopt -L -ccopt $(TOPLEVEL)/xenops $(TOPLEVEL)/xenops/xenops.cmxa
 
@@ -90,6 +91,7 @@ xenops_LIBS = unix.cmxa threads.cmxa \
 	-ccopt -L -ccopt $(TOPLEVEL)/libs/netdev $(TOPLEVEL)/libs/netdev/netdev.cmxa \
 	-ccopt -L -ccopt $(TOPLEVEL)/libs/scsi $(TOPLEVEL)/libs/scsi/scsi.cmxa \
 	-ccopt -L -ccopt $(TOPLEVEL)/libs/base64 $(TOPLEVEL)/libs/base64/base64.cmxa \
+	-ccopt -L -ccopt $(TOPLEVEL)/libs/dmbus $(TOPLEVEL)/libs/dmbus/dmbus.cmxa \
 	-ccopt -L -ccopt $(TOPLEVEL)/libs/common $(TOPLEVEL)/libs/common/tscommon.cmxa \
 	-ccopt -L -ccopt $(TOPLEVEL)/xenops $(TOPLEVEL)/xenops/xenops.cmxa
 

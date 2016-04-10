@@ -1,0 +1,4 @@
+version = "@VERSION@"
+description = "dmbus Interface"
+archive(byte) = "dmbus.cma"
+archive(native) = "dmbus.cmxa"

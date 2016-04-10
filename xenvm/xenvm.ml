@@ -447,7 +447,7 @@ let do_task state (task, args) =
 		try Some (f args s) with Tasks.Argument_not_found _ -> None
 		in
 
-	let task_desc = List.assoc task Tasks.actions_table in
+	(* let task_desc = List.assoc task Tasks.actions_table in *)
 	(*maybe assert_vmstate task_vmstate_required;*)
 	match task with
 	| Tasks.Quit ->
@@ -607,10 +607,10 @@ let do_task state (task, args) =
 		Xenvmlib.Ok
 
 let monitor_rpc_json socket state =
-	let assert_vmstate expected =
+	(* let assert_vmstate expected =
 		if expected <> state.vm_lifestate then
 			raise (Vmact.Vm_bad_state (expected, state.vm_lifestate));
-		in
+		in *)
 	let connections = ref [] in
 
 	let reply_error con error =
@@ -780,7 +780,7 @@ let introspect state msg =
 let monitor_rpc_dbus state =
 	let use_session = state.vm_monitors.monitor_use_dbus_session in
 	let intf = Printf.sprintf "org.xen.vm.uuid_%s" (String.replace "-" "_" state.vm_uuid) in
-	let match_s = sprintf "type='method',interface='%s'" intf in
+	(* let match_s = sprintf "type='method',interface='%s'" intf in *)
 	let bus = DBus.Bus.get (if use_session then DBus.Bus.Session else DBus.Bus.System) in
 	let reply = DBus.Bus.request_name bus intf [ DBus.Bus.DoNotQueue ] in
 	(match reply with
@@ -949,7 +949,7 @@ let main state =
 		try
 			(* start the domain *)
 			(match state.vm_cfg.startup with
-			| StartupShutdown -> ()
+                        | StartupShutdown -> ()
 			| StartupPause | StartupStart ->
 				with_xcs (fun xc xs -> Vmact.start_vm xc xs state false);
 				if state.vm_cfg.verbose then (
@@ -966,7 +966,7 @@ let main state =
 					info "resumed domain: %s" state.vm_uuid;
 				);
 			);
-			monitor socket state;
+			monitor socket state
 		with exn ->
 			let exnstr = string_of_exn exn in
 			error "fatal exception: %s" exnstr;

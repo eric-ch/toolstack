@@ -739,12 +739,16 @@ let add_devices xc xs domid state restore =
 
                 (* Add the PV keyboard and mouse devices *)
                 if cfg.vkbd then (
+                    info "HUGINN Add the PV keyboard and mouse devices.";
                     Device.Vkb.add ~xc ~xs ~hvm:cfg.hvm ~protocol domid 0;
-                    Device.Vkb.add ~xc ~xs ~hvm:cfg.hvm ~protocol domid 1
+                    Device.Vkb.add ~xc ~xs ~hvm:cfg.hvm ~protocol domid 1;
                 );
 
                 (* Add the PV framebufer device *)
-                if cfg.vfb then Device.Vfb.add ~xc ~xs ~hvm:cfg.hvm ~protocol domid;
+                if cfg.vfb then (
+                    info "HUGINN Add the PV framebuffer device.";
+                    Device.Vfb.add ~xc ~xs ~hvm:cfg.hvm ~protocol domid;
+                );
 
 		(* Add the PV audio device *)
 		if cfg.vsnd then Device.Vsnd.add ~xc ~xs ~hvm:cfg.hvm domid;
@@ -759,7 +763,7 @@ let add_devices xc xs domid state restore =
 			debug "add_devices: adding vtpm device, backend=%d instance=%d" cfg.vtpm_backend instance;
 			Device.Vtpm.add ~xc ~xs ~hvm:cfg.hvm domid ~instance
 		);
-		if cfg.hvm || cfg.qemu_pv then (
+		if cfg.hvm (*|| cfg.qemu_pv *) then (
 			(* add device model *)
 			debug "add_devices: adding device model";
 			if use_dm then (

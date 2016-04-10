@@ -37,6 +37,41 @@ let string_of_unix_process process =
 	| Unix.WSIGNALED i -> sprintf "signaled(%d)" i
 	| Unix.WSTOPPED i -> sprintf "stopped(%d)" i
 
+let dmbus_monitor service =
+    let disconnect fd =
+        try Dmbus.disconnect fd;
+        with e -> info "Dmbus.disconnect failed %s" (Printexc.to_string e)
+    in
+    let rec reconnect service =
+        match (
+            try Some (Dmbus.connect service)
+            with e -> info "Dmbus.connect failed %s" (Printexc.to_string e); None
+        ) with
+        | None -> Thread.delay 10.0; reconnect service
+        | Some fd -> fd
+    in
+    let receive fd =
+        try Dmbus.recvmsg fd
+        with e -> info "Dmbus.recvmsg failed %s" (Printexc.to_string e); None
+    in
+    let process msg =
+        match msg with
+        | Dmbus.DeviceModelReady -> info "dmbus service reports it is Ready."
+        | _ -> info "Unknown dmbus message received."
+    in
+    let fd = ref (reconnect service) in
+        info "HUGINN Start monitoring Dmbus service...";
+        while true; do
+            match receive !fd with
+            | None ->
+                disconnect !fd;
+                info "Dmbus service disconnected.";
+                Thread.delay 10.0;
+                fd := reconnect service
+            | Some msg -> process msg
+        done;
+        ()
+
 module Generic = struct
 (* this transactionally hvm:bool
            -> add entries to add a device
@@ -170,9 +205,7 @@ let mount ty readonly path keydir =
 
 let unmount device =
 	info "tap2: unmounting %s" device;
-	try Forkhelpers.execute_command_get_output ~withpath:true "/usr/sbin/tap-ctl"
-					[ "destroy"; "-d"; device; ];
-		()
+	try ignore (Forkhelpers.execute_command_get_output ~withpath:true "/usr/sbin/tap-ctl" [ "destroy"; "-d"; device; ])
 	with Forkhelpers.Spawn_internal_error (log, output, status) ->
 		let s = sprintf "output=%S status=%s" output (string_of_unix_process status) in
 		raise (Unmount_failure (device, s))
@@ -367,7 +400,7 @@ let hard_shutdown_complete = shutdown_done
 
 let clean_shutdown ~xs (x: device) =
 	debug "Device.Vbd.clean_shutdown %s" (string_of_device x);
-	let exists = try xs.Xs.read (backend_path_of_device ~xs x); true with Xb.Noent -> false in
+	let exists = try ignore (xs.Xs.read (backend_path_of_device ~xs x)); true with Xb.Noent -> false in
 	if exists then (
 		if request_shutdown ~xs x false (* normal *) then (
 			(* Allow the domain to reject the request by writing to the error node *)
@@ -391,7 +424,7 @@ let unplug_watch ~xs (x: device) = Watch.map (fun () -> "") (Watch.key_to_disapp
 
 let hard_shutdown ~xs (x: device) =
 	debug "Device.Vbd.hard_shutdown %s" (string_of_device x);
-	let exists = try xs.Xs.read (backend_path_of_device ~xs x); true with Xb.Noent -> false in
+	let exists = try ignore (xs.Xs.read (backend_path_of_device ~xs x)); true with Xb.Noent -> false in
 	if exists then (
 		if request_shutdown ~xs x true (* force *) then (
                     let backend_path = backend_path_of_device ~xs x in
@@ -686,7 +719,7 @@ let common_vif_unplug_watch ~xs (x: device) = Watch.map (fun () -> "") (Watch.ke
 let common_vif_error_watch ~xs (x: device) = Watch.value_to_appear (error_path_of_device ~xs x)
 let have_backend ~xs (x: device) =
 	try
-		xs.Xs.read (backend_path_of_device ~xs x);
+		ignore (xs.Xs.read (backend_path_of_device ~xs x));
 		true
 	with Xb.Noent ->
 		false
@@ -1382,6 +1415,7 @@ module Vfb = struct
 
 let add ~xc ~xs ~hvm ?(protocol=Protocol_Native) domid =
 	debug "Device.Vfb.add %d" domid;
+        info "HUGINN Device.Vkb.add %d" domid;
 
 	let frontend = { domid = domid; kind = Vfb; devid = 0 } in
 	let backend = { domid = 0; kind = Vfb; devid = 0 } in
@@ -1398,7 +1432,7 @@ let add ~xc ~xs ~hvm ?(protocol=Protocol_Native) domid =
 		"state", string_of_int (Xenbus.int_of Xenbus.Initialising);
 	] in
 	Generic.add_device ~xs device back front;
-	()
+        ignore (Thread.create dmbus_monitor (Dmbus.Surfman(0, Dmbus.Xenfb)))
 
 let hard_shutdown ~xs (x: device) =
 	debug "Device.Vfb.hard_shutdown %s" (string_of_device x);
@@ -1414,6 +1448,7 @@ module Vkb = struct
 
 let add ~xc ~xs ~hvm ?(protocol=Protocol_Native) domid devid =
 	debug "Device.Vkb.add %d" domid;
+        info "HUGINN Device.Vkb.add %d" domid;
 
 	let frontend = { domid = domid; kind = Vkb; devid = devid } in
 	let backend = { domid = 0; kind = Vkb; devid = devid } in
@@ -1430,7 +1465,7 @@ let add ~xc ~xs ~hvm ?(protocol=Protocol_Native) domid devid =
 		"state", string_of_int (Xenbus.int_of Xenbus.Initialising);
 	] in
 	Generic.add_device ~xs device back front;
-	()
+        ignore (Thread.create dmbus_monitor (Dmbus.Input(0, Dmbus.Inputkb)))
 
 let hard_shutdown ~xs (x: device) =
 	debug "Device.Vkb.hard_shutdown %s" (string_of_device x);

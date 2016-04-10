@@ -28,6 +28,7 @@ SUBDIRS        = libs/uuid libs/stdext libs/mmap \
                  libs/json libs/jsonrpc libs/http \
                  libs/log libs/xc libs/xg libs/eventchn \
                  libs/xb libs/xs libs/netdev \
+		 libs/dmbus \
 		 libs/common \
                  xenstore xenstored xenops xenvm closeandexec \
 
@@ -36,6 +37,7 @@ STAGE_SUBDIRS  = libs/uuid libs/stdext libs/mmap \
                  libs/json libs/jsonrpc libs/http \
                  libs/log libs/xc libs/eventchn \
                  libs/xb libs/xs libs/netdev \
+		 libs/dmbus \
 		 libs/common
 
 INSTALL_PROGRAMS_BIN = \

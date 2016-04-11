@@ -43,12 +43,23 @@ let dmbus_monitor service =
         with e -> info "Dmbus.disconnect failed %s" (Printexc.to_string e)
     in
     let rec reconnect service =
+        let reconnect_quirks service fd =
+            info "reconnect_quirks...";
+            match service with 
+            (* Input requires to be send SwitcherABS at any reconnection (or SEGV otherwise). *)
+            | Dmbus.Input _ -> (
+                info "Reconecting to Dmbus.Input, send SwitcherABS.";
+                try ignore (Dmbus.sendmsg fd (Dmbus.SwitcherABS false))
+                with e -> info "Dmbus.sendmsg failed %s" (Printexc.to_string e)
+            )
+            | _ -> ()
+        in
         match (
             try Some (Dmbus.connect service)
             with e -> info "Dmbus.connect failed %s" (Printexc.to_string e); None
         ) with
-        | None -> Thread.delay 10.0; reconnect service
-        | Some fd -> fd
+        | None -> ( info "reconnect failed, retry in 10s..."; Thread.delay 10.0; reconnect service )
+        | Some fd -> ( info "reconnect succeed, handle quirks and return!"; reconnect_quirks service fd; fd )
     in
     let receive fd =
         try Dmbus.recvmsg fd

@@ -1464,7 +1464,10 @@ let add ~xc ~xs ~hvm ?(protocol=Protocol_Native) domid devid =
 		"state", string_of_int (Xenbus.int_of Xenbus.Initialising);
 	] in
 	Generic.add_device ~xs device back front;
-        ignore (Thread.create dmbus_monitor (Dmbus.Input(0, Dmbus.Inputkb)))
+        if devid = 0 then (
+                info "HUGINN Device.Vkb.add %d" domid;
+                ignore (Thread.create dmbus_monitor (Dmbus.Input(0, Dmbus.Inputkb)))
+        )
 
 let hard_shutdown ~xs (x: device) =
 	debug "Device.Vkb.hard_shutdown %s" (string_of_device x);

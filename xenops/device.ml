@@ -1415,7 +1415,7 @@ module Vfb = struct
 
 let add ~xc ~xs ~hvm ?(protocol=Protocol_Native) domid =
 	debug "Device.Vfb.add %d" domid;
-        info "HUGINN Device.Vkb.add %d" domid;
+        info "HUGINN Device.Vfb.add %d" domid;
 
 	let frontend = { domid = domid; kind = Vfb; devid = 0 } in
 	let backend = { domid = 0; kind = Vfb; devid = 0 } in
@@ -1448,7 +1448,6 @@ module Vkb = struct
 
 let add ~xc ~xs ~hvm ?(protocol=Protocol_Native) domid devid =
 	debug "Device.Vkb.add %d" domid;
-        info "HUGINN Device.Vkb.add %d" domid;
 
 	let frontend = { domid = domid; kind = Vkb; devid = devid } in
 	let backend = { domid = 0; kind = Vkb; devid = devid } in

@@ -25,6 +25,7 @@ external disconnect : Unix.file_descr -> unit
 
 type message =
     | SwitcherABS of bool
+    | InputConfigReset of int
     | DeviceModelReady
 
 external recvmsg : Unix.file_descr -> message option

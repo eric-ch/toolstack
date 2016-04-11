@@ -106,6 +106,7 @@ static DeviceType caml_to_device_type(int devtype)
 /* This has to be kept in sync with /type message_type/. */
 static const int __message_types[] = {
     DMBUS_MSG_SWITCHER_ABS,
+    DMBUS_MSG_INPUT_CONFIG_RESET,
     DMBUS_MSG_DEVICE_MODEL_READY,
 };
 static int caml_to_message_type(int msgtype)
@@ -184,13 +185,20 @@ static value caml_alloc_dmbus_message(const union dmbus_msg *msg)
                     Val_bool(!!m->enabled));
             break;
         }
+        case DMBUS_MSG_INPUT_CONFIG_RESET: {
+            const struct msg_input_config_reset *m = &msg->switcher_abs;
+            caml_alloc_variant_param(r,
+                    Val_int(message_type_to_caml(hdr->msg_type)),
+                    Val_int(m->slot));
+            break;
+        }
         case DMBUS_MSG_DEVICE_MODEL_READY:
             caml_alloc_variant(r,
                     Val_int(message_type_to_caml(hdr->msg_type)));
             break;
         default:
-            caml_failwith(make_errmsg("%s() unknown dmbus message %d.",
-                                      __func__, hdr->msg_type));
+            caml_failwith(make_errmsg("%s() unknown dmbus message %d (msg_len:%d).",
+                                      __func__, hdr->msg_type, hdr->msg_len));
     }
     CAMLreturn(r);
 }
@@ -469,7 +477,7 @@ CAMLprim value stub_dmbus_sendmsg(value fd, value omsg)
     if (rc < 0)
         caml_failwith(
             make_errmsg("%s(): send_msg(%d, %p) failed msg_len:%d (%s).",
-                        __func__, fd, msg, strerror(errno))
+                        __func__, fd, &msg, msg.hdr.msg_len, strerror(errno))
             );
     CAMLreturn(Val_bool(rc != 0));
 }

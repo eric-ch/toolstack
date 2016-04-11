@@ -23,6 +23,7 @@ val disconnect : Unix.file_descr -> unit
 
 type message =
     | SwitcherABS of bool
+    | InputConfigReset of int
     | DeviceModelReady
 val recvmsg : Unix.file_descr -> message option
 val sendmsg : Unix.file_descr -> message -> bool

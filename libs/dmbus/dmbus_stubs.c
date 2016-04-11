@@ -156,14 +156,14 @@ static void caml_to_message(value caml_m, union dmbus_msg *c_m)
         /* XXX: Only DeviceModelReady in this case, for now.
          *      Should match Int_val(c_m) for immediate value variants. */
         struct msg_device_model_ready *m = &c_m->device_model_ready;
-        m->hdr.msg_len = sizeof (*m);
+        m->hdr.msg_len = sizeof (*m) - sizeof (m->hdr);
         m->hdr.msg_type = DMBUS_MSG_DEVICE_MODEL_READY;
         m->hdr.return_value = 0;
     } else {
         /* XXX: Only SwitchABS(bool) in this case, for now.
          *      Should match Tag_val(c_m) for constructor variants. */
         struct msg_switcher_abs *m = &c_m->switcher_abs;
-        m->hdr.msg_len = sizeof (*m);
+        m->hdr.msg_len = sizeof (*m) - sizeof (m->hdr);
         m->hdr.msg_type = DMBUS_MSG_SWITCHER_ABS;
         m->hdr.return_value = 0;
         m->enabled = Bool_val(Field(caml_m, 0));
@@ -443,7 +443,7 @@ CAMLprim value stub_dmbus_recvmsg(value caml_fd)
  */
 static int dmbus_send_msg(int fd, const union dmbus_msg *msg)
 {
-    size_t len = msg->hdr.msg_len;
+    size_t len = sizeof (msg->hdr) + msg->hdr.msg_len;
     ssize_t rc;
 
     while (len > 0) {
@@ -457,7 +457,7 @@ static int dmbus_send_msg(int fd, const union dmbus_msg *msg)
         }
         len -= rc;
     }
-    return msg->hdr.msg_len;
+    return sizeof (msg->hdr) + msg->hdr.msg_len;
 }
 
 /*
@@ -466,10 +466,11 @@ static int dmbus_send_msg(int fd, const union dmbus_msg *msg)
  * @return	True on success, False if the other-end disconnects.
  * @throw	CAML Failure exception.
  */
-CAMLprim value stub_dmbus_sendmsg(value fd, value omsg)
+CAMLprim value stub_dmbus_sendmsg(value caml_fd, value omsg)
 {
-    CAMLparam2(fd, omsg);
+    CAMLparam2(caml_fd, omsg);
     union dmbus_msg msg;
+    int fd = Int_val(caml_fd);
     int rc;
 
     caml_to_message(omsg, &msg);
